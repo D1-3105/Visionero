@@ -1,8 +1,11 @@
 import datetime
 
 import fastapi.concurrency
-from fastapi import FastAPI, Path
+from fastapi import FastAPI, Path, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.db.configs import acreate_session
+from backend.db.models import RemoteProcessExecution
 from backend.execution_management_api.input_schemas import ExecuteSchema
 from backend.shared.process_execution import run_process
 from backend.shared.process_scanner import scan_processes
@@ -19,11 +22,18 @@ async def get_process_states() -> ProcessStateListSchema:
 
 @app.post(
     '/processes/execute/',
-    description="Execute process by executable path (WATCH BACKSLASHES)"
+    description="Execute process by executable path (WATCH BACKSLASHES)",
+    status_code=201
 )
-async def execute_process(execute_info: ExecuteSchema) -> EventSchema:
+async def execute_process(
+        execute_info: ExecuteSchema,
+        ases: AsyncSession = Depends(acreate_session)
+) -> EventSchema:
     pid = await fastapi.concurrency.run_in_threadpool(run_process, execute_info.exe)
-    return {'pid': pid, 'executable': execute_info.exe, 'time': datetime.datetime.now()}
+    new_instance = RemoteProcessExecution(pid=pid, executable=execute_info.exe, time=datetime.datetime.now())
+    ases.add(new_instance)
+    await ases.commit()
+    return new_instance
 
 
 @app.get('/processes/terminate/', status_code=204)

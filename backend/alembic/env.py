@@ -2,17 +2,15 @@ import pathlib
 import sys
 from logging.config import fileConfig
 
-import psycopg2
 import sqlalchemy
 from alembic import context
-from asyncpg import InvalidCatalogNameError
 from sqlalchemy import text
 
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
 
-from backend.db.configs import settings_nonpersistent, acreate_session, settings_persistent
 from backend.db.setting_pool import DBSettings, BaseORMModel
 from backend.shared.configs import db_parameters
+from backend.db.models import RemoteProcessExecution
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -59,9 +57,6 @@ def run_migrations_offline() -> None:
 
     with context.begin_transaction():
         context.run_migrations()
-
-
-import asyncio
 
 
 def create_database_if_not_exists(db_parameters):

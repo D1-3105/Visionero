@@ -9,6 +9,9 @@ class EventSchema(BaseModel):
     executable: str
     time: datetime.datetime
 
+    class Config:
+        from_attributes = True
+
 
 class ProcessListSchema(BaseModel):
     processes: list[EventSchema]
