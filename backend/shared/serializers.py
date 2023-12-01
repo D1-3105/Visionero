@@ -16,6 +16,9 @@ class EventSchema(BaseModel):
 class ProcessListSchema(BaseModel):
     processes: list[EventSchema]
 
+    class Config:
+        from_attributes = True
+
 
 class ProcessWithStateSchema(BaseModel):
     class ProcessStateSchema(BaseModel):

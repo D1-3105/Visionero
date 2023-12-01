@@ -15,11 +15,13 @@ async def acreate_persistent_session():
     settings_persistent.ses_obtain_lock.release()
     await settings_persistent.async_session_usages.put(1)
     try:
+        if not settings_persistent.async_session_class:
+            await settings_persistent.asetup()
         yield settings_persistent.ases()
     finally:
         await settings_persistent.async_session_usages.get()
         settings_persistent.async_session_usages.task_done()
-        await settings_persistent.persistent_ses.flush()
+        await settings_persistent.ases().flush()
 
 
 async def acreate_session():

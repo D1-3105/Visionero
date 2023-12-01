@@ -2,14 +2,15 @@ import datetime
 
 import fastapi.concurrency
 from fastapi import FastAPI, Path, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.db.configs import acreate_session
+from backend.db.configs import acreate_session, acreate_persistent_session
 from backend.db.models import RemoteProcessExecution
 from backend.execution_management_api.input_schemas import ExecuteSchema
 from backend.shared.process_execution import run_process
 from backend.shared.process_scanner import scan_processes
-from backend.shared.serializers import ProcessStateListSchema, EventSchema, TerminatedProcessSchema
+from backend.shared.serializers import ProcessStateListSchema, EventSchema, TerminatedProcessSchema, ProcessListSchema
 
 app: FastAPI = FastAPI()
 
@@ -52,3 +53,10 @@ async def terminate_all_processes() -> TerminatedProcessSchema:
             pids.append(pid)
     await fastapi.concurrency.run_in_threadpool(run_process, f'taskkill /F /IM *')
     return {'pids': pids}
+
+
+@app.get('/processes/history/list')
+async def get_history(ases: AsyncSession = Depends(acreate_persistent_session)) -> ProcessListSchema:
+    processes_query = select(RemoteProcessExecution).order_by(RemoteProcessExecution.time.desc())
+    processes = (await ases.execute(processes_query)).scalars()
+    return {'processes': processes}
