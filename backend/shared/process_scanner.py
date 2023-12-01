@@ -44,9 +44,7 @@ def map_output(row: str, eq_signs: list[int]):
         yield s.strip()
 
 
-def scan_processes():
-    delta_pids = []
-    cur_pids = []
+def process_generator():
     process_output = os.popen('tasklist /v').read().split('\n')
     proc_list = get_process_list()
     out_processes_rows = process_output[3:]
@@ -55,19 +53,68 @@ def scan_processes():
         process_exe, pid, time_cpu = list(map_output(process_row, col_cnt))
         if process_exe not in proc_list:
             continue
-        if last_scanned_pids.get(pid) != process_exe:
-            h_cpu = int(time_cpu.split(':')[0]) * 3600
-            m_cpu = int(time_cpu.split(':')[1]) * 60
-            s_cpu = int(time_cpu.split(':')[2])
-            start_time = datetime.datetime.now() - datetime.timedelta(
-                seconds=h_cpu + m_cpu + s_cpu
-            )
-            delta_pids.append({'pid': pid, 'executable': process_exe, 'time': start_time})
-        cur_pids.append({'executable': process_exe, 'process_state': {'state': 'running', 'pid': int(pid)}})
-    for proc in get_process_list():
-        if proc not in map(lambda p: p['executable'], cur_pids):
-            cur_pids.append({'executable': proc, 'process_state': {'state': 'idle', 'pid': None}})
-    return {'delta': delta_pids, 'all': cur_pids}
+        h_cpu = int(time_cpu.split(':')[0]) * 3600
+        m_cpu = int(time_cpu.split(':')[1]) * 60
+        s_cpu = int(time_cpu.split(':')[2])
+        start_time = datetime.datetime.now() - datetime.timedelta(
+            seconds=h_cpu + m_cpu + s_cpu
+        )
+        yield process_exe, int(pid), start_time
+
+
+def scan_processes():
+    all_processes = []
+    for process_exe, pid, start_time in process_generator():
+        all_processes.append({'pid': pid, 'executable': process_exe, 'time': start_time})
+    return all_processes
+
+
+class ActiveProcessStream:
+    last_scanned_pids: dict[int, str]
+
+    def __init__(self, generator):
+        self.generator = generator
+        self.last_scanned_pids = {}
+
+    def get_active_processes(self):
+        active_pids = {}
+        active_process_list = []
+        for process_exe, pid, start_time in self.generator():
+            active_pids[pid] = process_exe
+            if self.last_scanned_pids.get(pid) != process_exe:
+                active_process_list.append({'pid': pid, 'executable': process_exe, 'time': start_time})
+
+        self.last_scanned_pids = active_pids
+        return active_process_list
+
+    def __call__(self, *args, **kwargs):
+        return self.get_active_processes()
+
+
+class TerminatedProcessStream:
+    last_scanned_pids: dict[int, dict]
+
+    def __init__(self, generator):
+        self.last_scanned_pids = {}
+        self.generator = generator
+
+    def get_terminated_processes(self):
+        active_pids = {}
+        terminated_processes = []
+        for process_exe, pid, start_time in self.generator():
+            active_pids[pid] = {'executable': process_exe, 'time': start_time}
+        for pid, process in self.last_scanned_pids.items():
+            if active_pids.get(pid, {}).get('executable') != process.get('executable'):
+                terminated_processes.append({'pid': pid, **process})
+        self.last_scanned_pids = active_pids
+        return terminated_processes
+
+    def __call__(self, *args, **kwargs):
+        return self.get_terminated_processes()
+
+
+active_process_stream = ActiveProcessStream(process_generator)
+terminated_process_stream = TerminatedProcessStream(process_generator)
 
 
 def offset_to_end(log_desc):
@@ -79,6 +126,10 @@ def offset_to_end(log_desc):
 
 
 def scan_terminated_processes(log_desc):
+    """
+    Window's based solution, but it's not working properly because it's Windows :))
+    Requires gpedit.msc setup
+    """
     terminated_processes = []
     flags = win32evtlog.EVENTLOG_FORWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
     events = win32evtlog.ReadEventLog(log_desc, flags, 9999)

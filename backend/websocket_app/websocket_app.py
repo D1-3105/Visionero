@@ -25,19 +25,25 @@ async def aqueue_wrapper(async_queue: asyncio.Queue):
 async def websocket_subscribe_on_process_termination(ws: WebSocket):
     await ws.accept()
     event_q = asyncio.Queue()
-    notificator_dead_processes.subscribe(event_q)
+    sub_id = notificator_dead_processes.subscribe(event_q)
+    try:
 
-    async for event in aqueue_wrapper(event_q):
-        msg = ProcessListSchema(**event).model_dump_json()
-        await ws.send_text(msg)
+        async for event in aqueue_wrapper(event_q):
+            msg = ProcessListSchema(processes=event).model_dump_json()
+            await ws.send_text(msg)
+    finally:
+        notificator_dead_processes.unsubscribe(sub_id)
 
 
 @app.websocket('/live_processes/stream')
 async def websocket_subscribe_on_process_active(ws: WebSocket):
     await ws.accept()
     event_q = asyncio.Queue()
-    notificator_active_processes.subscribe(event_q)
+    sub_id = notificator_active_processes.subscribe(event_q)
+    try:
 
-    async for event in aqueue_wrapper(event_q):
-        msg = ProcessListSchema(processes=event['delta']).model_dump_json()
-        await ws.send_text(msg)
+        async for event in aqueue_wrapper(event_q):
+            msg = ProcessListSchema(processes=event).model_dump_json()
+            await ws.send_text(msg)
+    finally:
+        notificator_active_processes.unsubscribe(sub_id)

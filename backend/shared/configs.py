@@ -1,11 +1,12 @@
 import os
+import pathlib
 from pathlib import Path
 
 from dotenv.main import load_dotenv
 
 BASE_PATH = Path(__file__).parent
 
-env_file = BASE_PATH / '..' / '..' / '.env'
+env_file = pathlib.Path('.env')
 
 assert env_file.exists(), f'File {env_file} not found'
 

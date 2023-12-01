@@ -3,7 +3,7 @@ import uuid
 
 import fastapi.concurrency
 
-from backend.shared.process_scanner import scan_terminated_processes, LOG_DESC, scan_processes
+from backend.shared.process_scanner import terminated_process_stream, scan_processes
 
 
 class NotificationWrapper:
@@ -41,7 +41,7 @@ async def arun_process_scanner():
 
 async def arun_terminated_process_scanner():
     current_terminated = await fastapi.concurrency.run_in_threadpool(
-        scan_terminated_processes, LOG_DESC
+        terminated_process_stream
     )
     await notificator_dead_processes.anotify_event(current_terminated)
     await asyncio.sleep(1)

@@ -88,7 +88,7 @@ function App() {
         };
 
         const onActiveMessage = (event) => {
-           setProcessState(event, StreamLiveProcessList, setStreamLiveProcessList);
+            setProcessState(event, StreamLiveProcessList, setStreamLiveProcessList);
         };
 
         socketDead.onmessage = onDeadMessage;

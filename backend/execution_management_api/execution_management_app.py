@@ -1,9 +1,13 @@
 import datetime
+import os
+import pathlib
 
 import fastapi.concurrency
 from fastapi import FastAPI, Path, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import FileResponse
+from starlette.staticfiles import StaticFiles
 
 from backend.db.configs import acreate_session, acreate_persistent_session
 from backend.db.models import RemoteProcessExecution
@@ -14,10 +18,22 @@ from backend.shared.serializers import ProcessStateListSchema, EventSchema, Term
 
 app: FastAPI = FastAPI()
 
+app.mount("/static", StaticFiles(directory=pathlib.Path(os.getenv('STATIC_ROOT')) / 'static'), name="static")
+
+
+@app.get("/")
+async def read_index():
+    return FileResponse(pathlib.Path(os.getenv('STATIC_ROOT')) / 'index.html')
+
+
+@app.get("/manifest.json")
+async def read_index():
+    return FileResponse(pathlib.Path(os.getenv('STATIC_ROOT')) / 'manifest.json')
+
 
 @app.get('/processes/states')
 async def get_process_states() -> ProcessStateListSchema:
-    processes = scan_processes()['all']
+    processes = await fastapi.concurrency.run_in_threadpool(scan_processes)
     return {'processes': processes}
 
 
