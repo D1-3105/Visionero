@@ -21,4 +21,13 @@ python -m nuitka --standalone --onefile backend/main.py
 На фронте включено логирование, я не успел отдебажить отрисовку, но по логам видно завершённые процессы. 
 Отрисовка активных процессов полностью работает.
 
-
+Пример .env:
+```
+POSTGRES_PASSWORD=postgres
+POSTGRES_USER=postgres
+POSTGRES_DB=visionero_db
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5435
+STATIC_ROOT=D:/Projects/Visionero/front/simple-test-app/build
+ALEMBIC_INI=D:\Projects\Visionero\backend\alembic.ini
+```
