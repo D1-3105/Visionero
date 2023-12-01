@@ -1,8 +1,8 @@
 """Process storage
 
-Revision ID: de6e3eec7e15
-Revises: a64d50d4a0c0
-Create Date: 2023-12-01 06:27:55.217845
+Revision ID: 7e8c45ba310a
+Revises: 
+Create Date: 2023-12-01 07:01:11.935167
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'de6e3eec7e15'
-down_revision: Union[str, None] = 'a64d50d4a0c0'
+revision: str = '7e8c45ba310a'
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

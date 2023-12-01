@@ -21,7 +21,6 @@ async def acreate_persistent_session():
     finally:
         await settings_persistent.async_session_usages.get()
         settings_persistent.async_session_usages.task_done()
-        await settings_persistent.ases().flush()
 
 
 async def acreate_session():
@@ -30,4 +29,4 @@ async def acreate_session():
             await settings_nonpersistent.asetup()
         async with settings_nonpersistent.async_session_class() as async_session:
             yield async_session
-            await settings_nonpersistent.async_session_usages.get()
+            await async_session.close()
