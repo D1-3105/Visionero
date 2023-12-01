@@ -61,13 +61,16 @@ def process_generator():
         process_exe, pid, time_cpu = list(map_output(process_row, col_cnt))
         if process_exe not in proc_list:
             continue
-        time_cpu = time_cpu.split(':')
-        h_cpu = cls_or_zero(time_cpu[0], int) * 3600
-        m_cpu = cls_or_zero(time_cpu[1], int) * 60
-        s_cpu = cls_or_zero(time_cpu[2], int)
-        start_time = datetime.datetime.now() - datetime.timedelta(
-            seconds=h_cpu + m_cpu + s_cpu
-        )
+        try:
+            time_cpu = time_cpu.split(':')
+            h_cpu = cls_or_zero(time_cpu[0], int) * 3600
+            m_cpu = cls_or_zero(time_cpu[1], int) * 60
+            s_cpu = cls_or_zero(time_cpu[2], int)
+            start_time = datetime.datetime.now() - datetime.timedelta(
+                seconds=h_cpu + m_cpu + s_cpu
+            )
+        except Exception as e:
+            start_time = datetime.datetime.now()
         yield process_exe, cls_or_zero(pid, int), start_time
 
 
