@@ -47,8 +47,9 @@ def map_output(row: str, eq_signs: list[int]):
 def process_generator():
     process_output = os.popen('tasklist /v').read().split('\n')
     proc_list = get_process_list()
-    out_processes_rows = process_output[3:]
-    col_cnt = list(map(lambda eq: eq.count('=') + 1, process_output[2].split()))
+    header_separator_index = next(i for i, line in enumerate(process_output) if '=' in line)
+    out_processes_rows = process_output[header_separator_index + 1:]
+    col_cnt = list(map(lambda eq: eq.count('=') + 1, process_output[header_separator_index].split()))
     for process_row in out_processes_rows:
         process_exe, pid, time_cpu = list(map_output(process_row, col_cnt))
         if process_exe not in proc_list:
