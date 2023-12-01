@@ -44,6 +44,13 @@ def map_output(row: str, eq_signs: list[int]):
         yield s.strip()
 
 
+def cls_or_zero(obj, cls):
+    try:
+        return cls(obj)
+    except ValueError:
+        return 0
+
+
 def process_generator():
     process_output = os.popen('tasklist /v').read().split('\n')
     proc_list = get_process_list()
@@ -54,13 +61,14 @@ def process_generator():
         process_exe, pid, time_cpu = list(map_output(process_row, col_cnt))
         if process_exe not in proc_list:
             continue
-        h_cpu = int(time_cpu.split(':')[0]) * 3600
-        m_cpu = int(time_cpu.split(':')[1]) * 60
-        s_cpu = int(time_cpu.split(':')[2])
+        time_cpu = time_cpu.split(':')
+        h_cpu = cls_or_zero(time_cpu[0], int) * 3600
+        m_cpu = cls_or_zero(time_cpu[1], int) * 60
+        s_cpu = cls_or_zero(time_cpu[2], int)
         start_time = datetime.datetime.now() - datetime.timedelta(
             seconds=h_cpu + m_cpu + s_cpu
         )
-        yield process_exe, int(pid), start_time
+        yield process_exe, cls_or_zero(pid, int), start_time
 
 
 def scan_processes():
